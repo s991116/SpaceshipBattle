@@ -1,5 +1,5 @@
 # Basic arcade program
-# Displays a black window with a triangle in the middle
+# Displays a black window with a spaceship sprite
 
 # Imports
 import arcade
@@ -8,33 +8,33 @@ import arcade
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 SCREEN_TITLE = "Spaceship Battle"
-RADIUS = 150
-TRIANGLE_SIZE = 10
 
 class gameWindow(arcade.Window):
   def __init__(self):
     super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     arcade.set_background_color(arcade.color.BLACK)
+
+    self.player_list = None
+    self.planet_list = None
+    self.bullet_list = None
   
   def setup(self):
-    pass
-  
+
+    self.player_list = arcade.SpriteList()
+    self.planet_list = arcade.SpriteList(use_spatial_hash = True)
+    self.bullet_list = arcade.SpriteList()
+
+    self.player_sprite = arcade.Sprite("sprites/spiked ship.png", 0.5)
+    self.player_sprite.center_x = 200
+    self.player_sprite.center_y = 200
+    self.player_list.append(self.player_sprite)
+
   def on_draw(self):
     arcade.start_render()
-    # Draw a blue circle
-    triangle_pos_x = SCREEN_WIDTH / 2
-    triangle_pos_y = SCREEN_HEIGHT / 2
 
-    x1 = triangle_pos_x
-    y1 = triangle_pos_y + 3 * TRIANGLE_SIZE
-
-    x2 = triangle_pos_x - TRIANGLE_SIZE
-    y2 = triangle_pos_y
-
-    x3 = triangle_pos_x + TRIANGLE_SIZE
-    y3 = triangle_pos_y
-    arcade.draw_triangle_outline(x1,y1,x2,y2,x3,y3,arcade.color.ARMY_GREEN, border_width= 5)
-
+    self.player_list.draw()
+    self.planet_list.draw()
+    self.bullet_list.draw()
 
 def main():
   window = gameWindow()
