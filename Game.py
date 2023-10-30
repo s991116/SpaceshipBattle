@@ -3,13 +3,17 @@
 
 # Imports
 import arcade
+import math
+from typing import Optional
+from arcade.pymunk_physics_engine import PymunkPhysicsEngine
 
 # Constants
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 SCREEN_TITLE = "Spaceship Battle"
 PLAYER_MOVEMENT_SPEED = 5
-
+PLAYER_MOVE_FORCE = 4000
+PLAYER_ANGLE_STEP = 5
 class gameWindow(arcade.Window):
   def __init__(self):
     super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
@@ -18,8 +22,14 @@ class gameWindow(arcade.Window):
     self.player_list = None
     self.planet_list = None
     self.bullet_list = None
-    self.physics_engine = None
+    self.physics_engine: Optional[PymunkPhysicsEngine] = None
   
+    # Track the current state of what key is pressed
+    self.left_pressed = False
+    self.right_pressed = False
+    self.up_pressed = False
+    self.down_pressed = False
+
   def setup(self):
 
     self.player_list = arcade.SpriteList()
@@ -31,50 +41,76 @@ class gameWindow(arcade.Window):
     self.player_sprite.center_y = 200
     self.player_list.append(self.player_sprite)
 
-    # Create the 'physics engine'
-    self.physics_engine = arcade.PhysicsEngineSimple(self.player_sprite, self.planet_list)
+    gravity = (0, 0)
+    damping = 0.8
+
+    # Create the physics engine
+    self.physics_engine = PymunkPhysicsEngine(damping=damping, gravity=gravity)
+
+    self.physics_engine.add_sprite(self.player_sprite,
+                                       friction=1.0,
+                                       moment=PymunkPhysicsEngine.MOMENT_INF,
+                                       damping=1.000,
+                                       collision_type="player",
+                                       max_velocity=400)
 
   def on_key_press(self, key, modifiers):
-    """Called whenever a key is pressed."""
-    if key == arcade.key.UP or key == arcade.key.W:
-      self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
-    elif key == arcade.key.DOWN or key == arcade.key.S:
-      self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
-    elif key == arcade.key.LEFT or key == arcade.key.A:
-      self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
-    elif key == arcade.key.RIGHT or key == arcade.key.D:
-      self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
+      """Called whenever a key is pressed. """
+      if key == arcade.key.UP:
+          self.up_pressed = True
+      elif key == arcade.key.DOWN:
+          self.down_pressed = True
+      elif key == arcade.key.LEFT:
+          self.left_pressed = True
+      elif key == arcade.key.RIGHT:
+          self.right_pressed = True
 
   def on_key_release(self, key, modifiers):
-    """Called when the user releases a key."""
-
-    if key == arcade.key.UP or key == arcade.key.W:
-      self.player_sprite.change_y = 0
-    elif key == arcade.key.DOWN or key == arcade.key.S:
-      self.player_sprite.change_y = 0
-    elif key == arcade.key.LEFT or key == arcade.key.A:
-      self.player_sprite.change_x = 0
-    elif key == arcade.key.RIGHT or key == arcade.key.D:
-      self.player_sprite.change_x = 0
+      """Called when the user releases a key. """
+      if key == arcade.key.UP:
+          self.up_pressed = False
+      elif key == arcade.key.DOWN:
+          self.down_pressed = False
+      elif key == arcade.key.LEFT:
+          self.left_pressed = False
+      elif key == arcade.key.RIGHT:
+          self.right_pressed = False
 
   def on_update(self, delta_time):
-    """Movement and game logic"""
+    # Calculate speed based on the keys pressed
+    self.player_sprite.change_x = 0
+    self.player_sprite.change_y = 0
+  
+    if self.up_pressed and not self.down_pressed:
+        angle_radians = math.radians(self.player_sprite.angle) + math.pi/2.0
+        force = (math.cos(angle_radians)*PLAYER_MOVE_FORCE, math.sin(angle_radians)*PLAYER_MOVE_FORCE)
+        self.physics_engine.apply_force(self.player_sprite, force)
+    elif self.down_pressed and not self.up_pressed:
+        angle_radians_opposite = math.radians(self.player_sprite.angle) + math.pi + math.pi/2.0
+        force = (math.cos(angle_radians_opposite)*PLAYER_MOVE_FORCE, math.sin(angle_radians_opposite)*PLAYER_MOVE_FORCE)
+        self.physics_engine.apply_force(self.player_sprite, force)
 
-    # Move the player with the physics engine
-    self.physics_engine.update()
+    # --- Move items in the physics engine
+    self.physics_engine.step()
+
+    if self.left_pressed and not self.right_pressed:
+        self.player_sprite.change_angle += PLAYER_ANGLE_STEP
+    elif self.right_pressed and not self.left_pressed:
+        self.player_sprite.change_angle += -PLAYER_ANGLE_STEP
+    
+    self.player_list.update()
+
 
   def on_draw(self):
     arcade.start_render()
-
     self.player_list.draw()
     self.planet_list.draw()
     self.bullet_list.draw()
-
-
+  
 def main():
   window = gameWindow()
   window.setup()
   arcade.run()
-
+  
 if __name__ == "__main__":
-   main()
+   main()  
