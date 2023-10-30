@@ -14,6 +14,7 @@ SCREEN_TITLE = "Spaceship Battle"
 PLAYER_MOVEMENT_SPEED = 5
 PLAYER_MOVE_FORCE = 3000
 PLAYER_ANGLE_STEP = 5
+BULLET_SPEED = 10
 class gameWindow(arcade.Window):
   def __init__(self):
     super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
@@ -29,6 +30,7 @@ class gameWindow(arcade.Window):
     self.right_pressed = False
     self.up_pressed = False
     self.down_pressed = False
+    self.fire_pressed = False
 
   def setup(self):
 
@@ -64,6 +66,8 @@ class gameWindow(arcade.Window):
           self.left_pressed = True
       elif key == arcade.key.RIGHT:
           self.right_pressed = True
+      elif key == arcade.key.SPACE:
+          self.fire_pressed = True
 
   def on_key_release(self, key, modifiers):
       """Called when the user releases a key. """
@@ -75,6 +79,8 @@ class gameWindow(arcade.Window):
           self.left_pressed = False
       elif key == arcade.key.RIGHT:
           self.right_pressed = False
+      elif key == arcade.key.SPACE:
+          self.fire_pressed = False
 
   def on_update(self, delta_time):
     # Calculate speed based on the keys pressed
@@ -98,7 +104,28 @@ class gameWindow(arcade.Window):
     elif self.right_pressed and not self.left_pressed:
         self.player_sprite.change_angle += -PLAYER_ANGLE_STEP
     
+    #Fire pressed
+    if self.fire_pressed:
+      bullet = arcade.Sprite("sprites/bullet.png", 1)
+      start_x = self.player_sprite.center_x
+      start_y = self.player_sprite.center_y
+      bullet.center_x = start_x
+      bullet.center_y = start_y
+      start_angle = self.player_sprite.change_angle + 90
+
+      start_angle_radian = math.radians(start_angle)
+      bullet.change_x = math.cos(start_angle_radian) * BULLET_SPEED
+      bullet.change_y = math.sin(start_angle_radian) * BULLET_SPEED
+      self.bullet_list.append(bullet)
+
     self.player_list.update()
+    self.bullet_list.update()
+
+    # If the bullet flies off-screen, remove it.
+    for bullet in self.bullet_list:
+      if bullet.bottom > self.width or bullet.top < 0 or bullet.right < 0 or bullet.left > self.width:
+          bullet.remove_from_sprite_lists()
+
 
 
   def on_draw(self):
