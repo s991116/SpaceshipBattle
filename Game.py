@@ -12,7 +12,7 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 SCREEN_TITLE = "Spaceship Battle"
 PLAYER_MOVEMENT_SPEED = 5
-PLAYER_MOVE_FORCE = 4000
+PLAYER_MOVE_FORCE = 3000
 PLAYER_ANGLE_STEP = 5
 class gameWindow(arcade.Window):
   def __init__(self):
@@ -50,7 +50,7 @@ class gameWindow(arcade.Window):
     self.physics_engine.add_sprite(self.player_sprite,
                                        friction=1.0,
                                        moment=PymunkPhysicsEngine.MOMENT_INF,
-                                       damping=1.000,
+                                       damping=0.8,
                                        collision_type="player",
                                        max_velocity=400)
 
