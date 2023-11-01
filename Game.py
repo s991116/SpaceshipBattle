@@ -20,9 +20,9 @@ class gameWindow(arcade.Window):
     super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     arcade.set_background_color(arcade.color.BLACK)
 
-    self.player_list = None
-    self.planet_list = None
-    self.bullet_list = None
+    self.scene = None
+    self.player_sprite = None
+
     self.physics_engine: Optional[PymunkPhysicsEngine] = None
   
     # Track the current state of what key is pressed
@@ -34,14 +34,27 @@ class gameWindow(arcade.Window):
 
   def setup(self):
 
-    self.player_list = arcade.SpriteList()
-    self.planet_list = arcade.SpriteList(use_spatial_hash = True)
-    self.bullet_list = arcade.SpriteList()
+    self.scene = arcade.Scene()
+
+    self.scene.add_sprite_list
+
+    self.scene.add_sprite_list("Planet", use_spatial_hash=True)
+    self.scene.add_sprite_list("Player")
+    self.scene.add_sprite_list("Bullet", use_spatial_hash=False)
+
 
     self.player_sprite = arcade.Sprite("sprites/spiked ship.png", 0.5)
     self.player_sprite.center_x = 200
     self.player_sprite.center_y = 200
-    self.player_list.append(self.player_sprite)
+
+    self.scene.add_sprite("Player", self.player_sprite)
+
+    planet = arcade.Sprite("sprites/planet.png", 1.0)
+    planet.center_x = 100
+    planet.center_y = 50
+    self.scene.add_sprite("Planet", planet)
+
+#    self.player_list.append(self.player_sprite)
 
     gravity = (0, 0)
     damping = 0.8
@@ -116,23 +129,29 @@ class gameWindow(arcade.Window):
       start_angle_radian = math.radians(start_angle)
       bullet.change_x = math.cos(start_angle_radian) * BULLET_SPEED
       bullet.change_y = math.sin(start_angle_radian) * BULLET_SPEED
-      self.bullet_list.append(bullet)
+      self.scene.add_sprite("Bullet", bullet)
 
-    self.player_list.update()
-    self.bullet_list.update()
+    self.scene.get_sprite_list("Player").update()
+    self.scene.get_sprite_list("Bullet").update()
 
     # If the bullet flies off-screen, remove it.
-    for bullet in self.bullet_list:
+    for bullet in self.scene.get_sprite_list("Bullet"):
       if bullet.bottom > self.width or bullet.top < 0 or bullet.right < 0 or bullet.left > self.width:
           bullet.remove_from_sprite_lists()
 
 
-
   def on_draw(self):
-    arcade.start_render()
-    self.player_list.draw()
-    self.planet_list.draw()
-    self.bullet_list.draw()
+
+    # Clear the screen to the background color
+    self.clear()
+
+    # Draw our Scene
+    self.scene.draw()    
+    
+#    arcade.start_render()
+#    self.player_list.draw()
+#    self.planet_list.draw()
+#    self.bullet_list.draw()
   
 def main():
   window = gameWindow()
