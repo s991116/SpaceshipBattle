@@ -98,9 +98,6 @@ class SpaceshipOne:
             )
             self.PhysicsEngine.apply_force(self.Sprite, force)
 
-        # --- Move items in the physics engine
-        # self.physics_engine.step() #Moved back
-
         if self.ControllerState.LeftPressed and not self.ControllerState.RightPressed:
             self.Sprite.change_angle += (
                 self.PlayerAngleStep
@@ -137,8 +134,6 @@ class SpaceshipOne:
                 or bullet.left > self.ScreenWidth
             ):
                 bullet.remove_from_sprite_lists()
-
-
 
 class gameWindow(arcade.Window):
     def __init__(self):
@@ -206,13 +201,6 @@ class gameWindow(arcade.Window):
 
         # Draw our Scene
         self.scene.draw()
-
-
-#    arcade.start_render()
-#    self.player_list.draw()
-#    self.planet_list.draw()
-#    self.bullet_list.draw()
-
 
 def main():
     window = gameWindow()
