@@ -23,36 +23,47 @@ class SpaceshipOne:
         self.Sprite.center_x = 200
         self.Sprite.center_y = 200
 
+class ControllerKeys:
+    def __init__(self, upKey, downKey, leftKey, rightKey, fireKey, specialKey):
+        self.UpKey = upKey
+        self.DownKey = downKey
+        self.LeftKey = leftKey
+        self.RightKey = rightKey
+        self.FireKey = fireKey
+        self.SpecialKey = specialKey
+
 class ControllerState:
-    def __init__(self):
+    def __init__(self, controllerKeys: ControllerKeys):
         self.LeftPressed = False
         self.RightPressed = False
         self.UpPressed = False
         self.DownPressed = False
         self.FirePressed = False
 
+        self.ControllerKeys = controllerKeys
+
     def keyReleased(self, key):
-        if key == arcade.key.UP:
+        if key == self.ControllerKeys.UpKey:
             self.UpPressed = False
-        elif key == arcade.key.DOWN:
+        elif key == self.ControllerKeys.DownKey:
             self.DownPressed = False
-        elif key == arcade.key.LEFT:
+        elif key == self.ControllerKeys.LeftKey:
             self.LeftPressed = False
-        elif key == arcade.key.RIGHT:
+        elif key == self.ControllerKeys.RightKey:
             self.RightPressed = False
-        elif key == arcade.key.SPACE:
+        elif key == self.ControllerKeys.FireKey:
             self.FirePressed = False
 
     def keyPressed(self, key):
-        if key == arcade.key.UP:
+        if key == self.ControllerKeys.UpKey:
             self.UpPressed = True
-        elif key == arcade.key.DOWN:
+        elif key == self.ControllerKeys.DownKey:
             self.DownPressed = True
-        elif key == arcade.key.LEFT:
+        elif key == self.ControllerKeys.LeftKey:
             self.LeftPressed = True
-        elif key == arcade.key.RIGHT:
+        elif key == self.ControllerKeys.RightKey:
             self.RightPressed = True
-        elif key == arcade.key.SPACE:
+        elif key == self.ControllerKeys.FireKey:
             self.FirePressed = True
         
 
@@ -63,14 +74,18 @@ class gameWindow(arcade.Window):
 
         self.scene = None
 
-        self.player_spaceship = SpaceshipOne()
-
-        # self.player_sprite = None
-
         self.physics_engine: Optional[PymunkPhysicsEngine] = None
+        gravity = (0, 0)
+        damping = 0.8
+
+        # Create the physics engine
+        self.physics_engine = PymunkPhysicsEngine(damping=damping, gravity=gravity)
+
+        self.player1Spaceship = SpaceshipOne()
 
         # Track the current state of what key is pressed
-        self.controllerState = ControllerState()
+        self.controllerKeys = ControllerKeys(arcade.key.UP,arcade.key.DOWN,arcade.key.LEFT,arcade.key.RIGHT,arcade.key.SPACE,arcade.key.MOD_SHIFT)
+        self.controllerState = ControllerState(self.controllerKeys)
 
     def setup(self):
         self.scene = arcade.Scene()
@@ -81,21 +96,15 @@ class gameWindow(arcade.Window):
         self.scene.add_sprite_list("Player")
         self.scene.add_sprite_list("Bullet", use_spatial_hash=False)
 
-        self.scene.add_sprite("Player", self.player_spaceship.Sprite)
+        self.scene.add_sprite("Player", self.player1Spaceship.Sprite)
 
         planet = arcade.Sprite("sprites/planet.png", 1.0)
         planet.center_x = 100
         planet.center_y = 50
         self.scene.add_sprite("Planet", planet)
 
-        gravity = (0, 0)
-        damping = 0.8
-
-        # Create the physics engine
-        self.physics_engine = PymunkPhysicsEngine(damping=damping, gravity=gravity)
-
         self.physics_engine.add_sprite(
-            self.player_spaceship.Sprite,
+            self.player1Spaceship.Sprite,
             friction=1.0,
             moment=PymunkPhysicsEngine.MOMENT_INF,
             damping=0.8,
@@ -113,57 +122,57 @@ class gameWindow(arcade.Window):
 
     def on_update(self, delta_time):
         # Calculate speed based on the keys pressed
-        self.player_spaceship.Sprite.change_x = 0
-        self.player_spaceship.Sprite.change_y = 0
+        self.player1Spaceship.Sprite.change_x = 0
+        self.player1Spaceship.Sprite.change_y = 0
 
         if self.controllerState.UpPressed and not self.controllerState.DownPressed:
             angle_radians = (
-                math.radians(self.player_spaceship.Sprite.angle) + math.pi / 2.0
+                math.radians(self.player1Spaceship.Sprite.angle) + math.pi / 2.0
             )
             force = (
-                math.cos(angle_radians) * self.player_spaceship.MoveForce,
-                math.sin(angle_radians) * self.player_spaceship.MoveForce,
+                math.cos(angle_radians) * self.player1Spaceship.MoveForce,
+                math.sin(angle_radians) * self.player1Spaceship.MoveForce,
             )
-            self.physics_engine.apply_force(self.player_spaceship.Sprite, force)
+            self.physics_engine.apply_force(self.player1Spaceship.Sprite, force)
         elif self.controllerState.DownPressed and not self.controllerState.UpPressed:
             angle_radians_opposite = (
-                math.radians(self.player_spaceship.Sprite.angle)
+                math.radians(self.player1Spaceship.Sprite.angle)
                 + math.pi
                 + math.pi / 2.0
             )
             force = (
-                math.cos(angle_radians_opposite) * self.player_spaceship.MoveForce,
-                math.sin(angle_radians_opposite) * self.player_spaceship.MoveForce,
+                math.cos(angle_radians_opposite) * self.player1Spaceship.MoveForce,
+                math.sin(angle_radians_opposite) * self.player1Spaceship.MoveForce,
             )
-            self.physics_engine.apply_force(self.player_spaceship.Sprite, force)
+            self.physics_engine.apply_force(self.player1Spaceship.Sprite, force)
 
         # --- Move items in the physics engine
         self.physics_engine.step()
 
         if self.controllerState.LeftPressed and not self.controllerState.RightPressed:
-            self.player_spaceship.Sprite.change_angle += (
-                self.player_spaceship.PlayerAngleStep
+            self.player1Spaceship.Sprite.change_angle += (
+                self.player1Spaceship.PlayerAngleStep
             )
         elif self.controllerState.RightPressed and not self.controllerState.LeftPressed:
-            self.player_spaceship.Sprite.change_angle += (
-                -self.player_spaceship.PlayerAngleStep
+            self.player1Spaceship.Sprite.change_angle += (
+                -self.player1Spaceship.PlayerAngleStep
             )
 
         # Fire pressed
         if self.controllerState.FirePressed:
             bullet = arcade.Sprite("sprites/bullet.png", 1)
-            start_x = self.player_spaceship.Sprite.center_x
-            start_y = self.player_spaceship.Sprite.center_y
+            start_x = self.player1Spaceship.Sprite.center_x
+            start_y = self.player1Spaceship.Sprite.center_y
             bullet.center_x = start_x
             bullet.center_y = start_y
-            start_angle = self.player_spaceship.Sprite.change_angle + 90
+            start_angle = self.player1Spaceship.Sprite.change_angle + 90
 
             start_angle_radian = math.radians(start_angle)
             bullet.change_x = (
-                math.cos(start_angle_radian) * self.player_spaceship.BulletSpeed
+                math.cos(start_angle_radian) * self.player1Spaceship.BulletSpeed
             )
             bullet.change_y = (
-                math.sin(start_angle_radian) * self.player_spaceship.BulletSpeed
+                math.sin(start_angle_radian) * self.player1Spaceship.BulletSpeed
             )
             self.scene.add_sprite("Bullet", bullet)
 
