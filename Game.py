@@ -12,6 +12,7 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 SCREEN_TITLE = "Spaceship Battle"
 
+
 class ControllerKeys:
     def __init__(self, upKey, downKey, leftKey, rightKey, fireKey, specialKey):
         self.UpKey = upKey
@@ -20,6 +21,7 @@ class ControllerKeys:
         self.RightKey = rightKey
         self.FireKey = fireKey
         self.SpecialKey = specialKey
+
 
 class ControllerState:
     def __init__(self, controllerKeys: ControllerKeys):
@@ -55,9 +57,16 @@ class ControllerState:
         elif key == self.ControllerKeys.FireKey:
             self.FirePressed = True
 
-class SpaceshipOne:
-    def __init__(self, physicsEngine:PymunkPhysicsEngine, controllerState:ControllerState, scene:arcade.Scene, screenWidth:int, screenHeight:int,):
 
+class SpaceshipOne:
+    def __init__(
+        self,
+        physicsEngine: PymunkPhysicsEngine,
+        controllerState: ControllerState,
+        scene: arcade.Scene,
+        screenWidth: int,
+        screenHeight: int,
+    ):
         self.PhysicsEngine = physicsEngine
         self.ControllerState = controllerState
         self.Scene = scene
@@ -71,6 +80,16 @@ class SpaceshipOne:
         self.Sprite = arcade.Sprite("sprites/spiked ship.png", 0.5)
         self.Sprite.center_x = 200
         self.Sprite.center_y = 200
+        self.Scene.add_sprite("Player", self.Sprite)
+
+        self.PhysicsEngine.add_sprite(
+            self.Sprite,
+            friction=1.0,
+            moment=PymunkPhysicsEngine.MOMENT_INF,
+            damping=0.8,
+            collision_type="player",
+            max_velocity=400,
+        )
 
     def Update(self, delta_time_float):
         # Calculate speed based on the keys pressed
@@ -78,9 +97,7 @@ class SpaceshipOne:
         self.Sprite.change_y = 0
 
         if self.ControllerState.UpPressed and not self.ControllerState.DownPressed:
-            angle_radians = (
-                math.radians(self.Sprite.angle) + math.pi / 2.0
-            )
+            angle_radians = math.radians(self.Sprite.angle) + math.pi / 2.0
             force = (
                 math.cos(angle_radians) * self.MoveForce,
                 math.sin(angle_radians) * self.MoveForce,
@@ -88,9 +105,7 @@ class SpaceshipOne:
             self.PhysicsEngine.apply_force(self.Sprite, force)
         elif self.ControllerState.DownPressed and not self.ControllerState.UpPressed:
             angle_radians_opposite = (
-                math.radians(self.Sprite.angle)
-                + math.pi
-                + math.pi / 2.0
+                math.radians(self.Sprite.angle) + math.pi + math.pi / 2.0
             )
             force = (
                 math.cos(angle_radians_opposite) * self.MoveForce,
@@ -99,13 +114,9 @@ class SpaceshipOne:
             self.PhysicsEngine.apply_force(self.Sprite, force)
 
         if self.ControllerState.LeftPressed and not self.ControllerState.RightPressed:
-            self.Sprite.change_angle += (
-                self.PlayerAngleStep
-            )
+            self.Sprite.change_angle += self.PlayerAngleStep
         elif self.ControllerState.RightPressed and not self.ControllerState.LeftPressed:
-            self.Sprite.change_angle += (
-                -self.PlayerAngleStep
-            )
+            self.Sprite.change_angle += -self.PlayerAngleStep
 
         # Fire pressed
         if self.ControllerState.FirePressed:
@@ -117,12 +128,8 @@ class SpaceshipOne:
             start_angle = self.Sprite.change_angle + 90
 
             start_angle_radian = math.radians(start_angle)
-            bullet.change_x = (
-                math.cos(start_angle_radian) * self.BulletSpeed
-            )
-            bullet.change_y = (
-                math.sin(start_angle_radian) * self.BulletSpeed
-            )
+            bullet.change_x = math.cos(start_angle_radian) * self.BulletSpeed
+            bullet.change_y = math.sin(start_angle_radian) * self.BulletSpeed
             self.Scene.add_sprite("Bullet", bullet)
 
         # If the bullet flies off-screen, remove it.
@@ -134,6 +141,7 @@ class SpaceshipOne:
                 or bullet.left > self.ScreenWidth
             ):
                 bullet.remove_from_sprite_lists()
+
 
 class gameWindow(arcade.Window):
     def __init__(self):
@@ -150,17 +158,42 @@ class gameWindow(arcade.Window):
         self.physics_engine = PymunkPhysicsEngine(damping=damping, gravity=gravity)
 
         # Track the current state of what key is pressed
-        self.controller1Keys = ControllerKeys(arcade.key.UP,arcade.key.DOWN,arcade.key.LEFT,arcade.key.RIGHT,arcade.key.SPACE,arcade.key.MOD_SHIFT)        
+        self.controller1Keys = ControllerKeys(
+            arcade.key.UP,
+            arcade.key.DOWN,
+            arcade.key.LEFT,
+            arcade.key.RIGHT,
+            arcade.key.SPACE,
+            arcade.key.MOD_SHIFT,
+        )
         self.controller1State = ControllerState(self.controller1Keys)
 
-        self.controller2Keys = ControllerKeys(arcade.key.W,arcade.key.S,arcade.key.A,arcade.key.D,arcade.key.F,arcade.key.G)        
+        self.controller2Keys = ControllerKeys(
+            arcade.key.W,
+            arcade.key.S,
+            arcade.key.A,
+            arcade.key.D,
+            arcade.key.F,
+            arcade.key.G,
+        )
         self.controller2State = ControllerState(self.controller2Keys)
-
 
     def setup(self):
         self.scene = arcade.Scene()
-        self.player1Spaceship = SpaceshipOne(self.physics_engine, self.controller1State, self.scene, self.width, self.height)
-        self.player2Spaceship = SpaceshipOne(self.physics_engine, self.controller2State, self.scene, self.width, self.height)
+        self.player1Spaceship = SpaceshipOne(
+            self.physics_engine,
+            self.controller1State,
+            self.scene,
+            self.width,
+            self.height,
+        )
+        self.player2Spaceship = SpaceshipOne(
+            self.physics_engine,
+            self.controller2State,
+            self.scene,
+            self.width,
+            self.height,
+        )
 
         self.scene.add_sprite_list
 
@@ -168,33 +201,12 @@ class gameWindow(arcade.Window):
         self.scene.add_sprite_list("Player")
         self.scene.add_sprite_list("Bullet", use_spatial_hash=False)
 
-        self.scene.add_sprite("Player", self.player1Spaceship.Sprite)
         self.scene.add_sprite("Player", self.player2Spaceship.Sprite)
-
 
         planet = arcade.Sprite("sprites/planet.png", 1.0)
         planet.center_x = 100
         planet.center_y = 50
         self.scene.add_sprite("Planet", planet)
-
-        self.physics_engine.add_sprite(
-            self.player1Spaceship.Sprite,
-            friction=1.0,
-            moment=PymunkPhysicsEngine.MOMENT_INF,
-            damping=0.8,
-            collision_type="player",
-            max_velocity=400,
-        )
-
-        self.physics_engine.add_sprite(
-            self.player2Spaceship.Sprite,
-            friction=1.0,
-            moment=PymunkPhysicsEngine.MOMENT_INF,
-            damping=0.8,
-            collision_type="player",
-            max_velocity=400,
-        )
-
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
@@ -208,11 +220,10 @@ class gameWindow(arcade.Window):
 
     def on_update(self, delta_time):
         self.player1Spaceship.Update(delta_time)
-        self.player2Spaceship.Update(delta_time)        
+        self.player2Spaceship.Update(delta_time)
         self.physics_engine.step()
         self.scene.get_sprite_list("Player").update()
         self.scene.get_sprite_list("Bullet").update()
-
 
     def on_draw(self):
         # Clear the screen to the background color
@@ -220,6 +231,7 @@ class gameWindow(arcade.Window):
 
         # Draw our Scene
         self.scene.draw()
+
 
 def main():
     window = gameWindow()
