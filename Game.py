@@ -150,13 +150,17 @@ class gameWindow(arcade.Window):
         self.physics_engine = PymunkPhysicsEngine(damping=damping, gravity=gravity)
 
         # Track the current state of what key is pressed
-        self.controllerKeys = ControllerKeys(arcade.key.UP,arcade.key.DOWN,arcade.key.LEFT,arcade.key.RIGHT,arcade.key.SPACE,arcade.key.MOD_SHIFT)
-        self.controllerState = ControllerState(self.controllerKeys)
+        self.controller1Keys = ControllerKeys(arcade.key.UP,arcade.key.DOWN,arcade.key.LEFT,arcade.key.RIGHT,arcade.key.SPACE,arcade.key.MOD_SHIFT)        
+        self.controller1State = ControllerState(self.controller1Keys)
+
+        self.controller2Keys = ControllerKeys(arcade.key.W,arcade.key.S,arcade.key.A,arcade.key.D,arcade.key.F,arcade.key.G)        
+        self.controller2State = ControllerState(self.controller2Keys)
 
 
     def setup(self):
         self.scene = arcade.Scene()
-        self.player1Spaceship = SpaceshipOne(self.physics_engine, self.controllerState, self.scene, self.width, self.height)
+        self.player1Spaceship = SpaceshipOne(self.physics_engine, self.controller1State, self.scene, self.width, self.height)
+        self.player2Spaceship = SpaceshipOne(self.physics_engine, self.controller2State, self.scene, self.width, self.height)
 
         self.scene.add_sprite_list
 
@@ -165,6 +169,8 @@ class gameWindow(arcade.Window):
         self.scene.add_sprite_list("Bullet", use_spatial_hash=False)
 
         self.scene.add_sprite("Player", self.player1Spaceship.Sprite)
+        self.scene.add_sprite("Player", self.player2Spaceship.Sprite)
+
 
         planet = arcade.Sprite("sprites/planet.png", 1.0)
         planet.center_x = 100
@@ -180,16 +186,29 @@ class gameWindow(arcade.Window):
             max_velocity=400,
         )
 
+        self.physics_engine.add_sprite(
+            self.player2Spaceship.Sprite,
+            friction=1.0,
+            moment=PymunkPhysicsEngine.MOMENT_INF,
+            damping=0.8,
+            collision_type="player",
+            max_velocity=400,
+        )
+
+
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
-        self.controllerState.keyPressed(key)
+        self.controller1State.keyPressed(key)
+        self.controller2State.keyPressed(key)
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
-        self.controllerState.keyReleased(key)
+        self.controller1State.keyReleased(key)
+        self.controller2State.keyReleased(key)
 
     def on_update(self, delta_time):
         self.player1Spaceship.Update(delta_time)
+        self.player2Spaceship.Update(delta_time)        
         self.physics_engine.step()
         self.scene.get_sprite_list("Player").update()
         self.scene.get_sprite_list("Bullet").update()
