@@ -12,17 +12,6 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 SCREEN_TITLE = "Spaceship Battle"
 
-
-class SpaceshipOne:
-    def __init__(self):
-        self.MovementSpeed = 5
-        self.MoveForce = 3000
-        self.PlayerAngleStep = 5
-        self.BulletSpeed = 10
-        self.Sprite = arcade.Sprite("sprites/spiked ship.png", 0.5)
-        self.Sprite.center_x = 200
-        self.Sprite.center_y = 200
-
 class ControllerKeys:
     def __init__(self, upKey, downKey, leftKey, rightKey, fireKey, specialKey):
         self.UpKey = upKey
@@ -65,7 +54,91 @@ class ControllerState:
             self.RightPressed = True
         elif key == self.ControllerKeys.FireKey:
             self.FirePressed = True
-        
+
+class SpaceshipOne:
+    def __init__(self, physicsEngine:PymunkPhysicsEngine, controllerState:ControllerState, scene:arcade.Scene, screenWidth:int, screenHeight:int,):
+
+        self.PhysicsEngine = physicsEngine
+        self.ControllerState = controllerState
+        self.Scene = scene
+        self.ScreenWidth = screenWidth
+        self.screenHeight = screenHeight
+
+        self.MovementSpeed = 5
+        self.MoveForce = 3000
+        self.PlayerAngleStep = 5
+        self.BulletSpeed = 10
+        self.Sprite = arcade.Sprite("sprites/spiked ship.png", 0.5)
+        self.Sprite.center_x = 200
+        self.Sprite.center_y = 200
+
+    def Update(self, delta_time_float):
+        # Calculate speed based on the keys pressed
+        self.Sprite.change_x = 0
+        self.Sprite.change_y = 0
+
+        if self.ControllerState.UpPressed and not self.ControllerState.DownPressed:
+            angle_radians = (
+                math.radians(self.Sprite.angle) + math.pi / 2.0
+            )
+            force = (
+                math.cos(angle_radians) * self.MoveForce,
+                math.sin(angle_radians) * self.MoveForce,
+            )
+            self.PhysicsEngine.apply_force(self.Sprite, force)
+        elif self.ControllerState.DownPressed and not self.ControllerState.UpPressed:
+            angle_radians_opposite = (
+                math.radians(self.Sprite.angle)
+                + math.pi
+                + math.pi / 2.0
+            )
+            force = (
+                math.cos(angle_radians_opposite) * self.MoveForce,
+                math.sin(angle_radians_opposite) * self.MoveForce,
+            )
+            self.PhysicsEngine.apply_force(self.Sprite, force)
+
+        # --- Move items in the physics engine
+        # self.physics_engine.step() #Moved back
+
+        if self.ControllerState.LeftPressed and not self.ControllerState.RightPressed:
+            self.Sprite.change_angle += (
+                self.PlayerAngleStep
+            )
+        elif self.ControllerState.RightPressed and not self.ControllerState.LeftPressed:
+            self.Sprite.change_angle += (
+                -self.PlayerAngleStep
+            )
+
+        # Fire pressed
+        if self.ControllerState.FirePressed:
+            bullet = arcade.Sprite("sprites/bullet.png", 1)
+            start_x = self.Sprite.center_x
+            start_y = self.Sprite.center_y
+            bullet.center_x = start_x
+            bullet.center_y = start_y
+            start_angle = self.Sprite.change_angle + 90
+
+            start_angle_radian = math.radians(start_angle)
+            bullet.change_x = (
+                math.cos(start_angle_radian) * self.BulletSpeed
+            )
+            bullet.change_y = (
+                math.sin(start_angle_radian) * self.BulletSpeed
+            )
+            self.Scene.add_sprite("Bullet", bullet)
+
+        # If the bullet flies off-screen, remove it.
+        for bullet in self.Scene.get_sprite_list("Bullet"):
+            if (
+                bullet.bottom > self.ScreenWidth
+                or bullet.top < 0
+                or bullet.right < 0
+                or bullet.left > self.ScreenWidth
+            ):
+                bullet.remove_from_sprite_lists()
+
+
 
 class gameWindow(arcade.Window):
     def __init__(self):
@@ -81,14 +154,14 @@ class gameWindow(arcade.Window):
         # Create the physics engine
         self.physics_engine = PymunkPhysicsEngine(damping=damping, gravity=gravity)
 
-        self.player1Spaceship = SpaceshipOne()
-
         # Track the current state of what key is pressed
         self.controllerKeys = ControllerKeys(arcade.key.UP,arcade.key.DOWN,arcade.key.LEFT,arcade.key.RIGHT,arcade.key.SPACE,arcade.key.MOD_SHIFT)
         self.controllerState = ControllerState(self.controllerKeys)
 
+
     def setup(self):
         self.scene = arcade.Scene()
+        self.player1Spaceship = SpaceshipOne(self.physics_engine, self.controllerState, self.scene, self.width, self.height)
 
         self.scene.add_sprite_list
 
@@ -121,73 +194,11 @@ class gameWindow(arcade.Window):
         self.controllerState.keyReleased(key)
 
     def on_update(self, delta_time):
-        # Calculate speed based on the keys pressed
-        self.player1Spaceship.Sprite.change_x = 0
-        self.player1Spaceship.Sprite.change_y = 0
-
-        if self.controllerState.UpPressed and not self.controllerState.DownPressed:
-            angle_radians = (
-                math.radians(self.player1Spaceship.Sprite.angle) + math.pi / 2.0
-            )
-            force = (
-                math.cos(angle_radians) * self.player1Spaceship.MoveForce,
-                math.sin(angle_radians) * self.player1Spaceship.MoveForce,
-            )
-            self.physics_engine.apply_force(self.player1Spaceship.Sprite, force)
-        elif self.controllerState.DownPressed and not self.controllerState.UpPressed:
-            angle_radians_opposite = (
-                math.radians(self.player1Spaceship.Sprite.angle)
-                + math.pi
-                + math.pi / 2.0
-            )
-            force = (
-                math.cos(angle_radians_opposite) * self.player1Spaceship.MoveForce,
-                math.sin(angle_radians_opposite) * self.player1Spaceship.MoveForce,
-            )
-            self.physics_engine.apply_force(self.player1Spaceship.Sprite, force)
-
-        # --- Move items in the physics engine
+        self.player1Spaceship.Update(delta_time)
         self.physics_engine.step()
-
-        if self.controllerState.LeftPressed and not self.controllerState.RightPressed:
-            self.player1Spaceship.Sprite.change_angle += (
-                self.player1Spaceship.PlayerAngleStep
-            )
-        elif self.controllerState.RightPressed and not self.controllerState.LeftPressed:
-            self.player1Spaceship.Sprite.change_angle += (
-                -self.player1Spaceship.PlayerAngleStep
-            )
-
-        # Fire pressed
-        if self.controllerState.FirePressed:
-            bullet = arcade.Sprite("sprites/bullet.png", 1)
-            start_x = self.player1Spaceship.Sprite.center_x
-            start_y = self.player1Spaceship.Sprite.center_y
-            bullet.center_x = start_x
-            bullet.center_y = start_y
-            start_angle = self.player1Spaceship.Sprite.change_angle + 90
-
-            start_angle_radian = math.radians(start_angle)
-            bullet.change_x = (
-                math.cos(start_angle_radian) * self.player1Spaceship.BulletSpeed
-            )
-            bullet.change_y = (
-                math.sin(start_angle_radian) * self.player1Spaceship.BulletSpeed
-            )
-            self.scene.add_sprite("Bullet", bullet)
-
         self.scene.get_sprite_list("Player").update()
         self.scene.get_sprite_list("Bullet").update()
 
-        # If the bullet flies off-screen, remove it.
-        for bullet in self.scene.get_sprite_list("Bullet"):
-            if (
-                bullet.bottom > self.width
-                or bullet.top < 0
-                or bullet.right < 0
-                or bullet.left > self.width
-            ):
-                bullet.remove_from_sprite_lists()
 
     def on_draw(self):
         # Clear the screen to the background color
