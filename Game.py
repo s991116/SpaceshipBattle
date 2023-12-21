@@ -57,6 +57,33 @@ class ControllerState:
         elif key == self.ControllerKeys.FireKey:
             self.FirePressed = True
 
+class Bullet:
+    def __init__(self, positionX: float, positionY: float, angle: float, physicsEngine: PymunkPhysicsEngine):
+        self.Sprite = arcade.Sprite("sprites/bullet.png", 1)
+        self.BulletSpeed = 10
+        self.BulletForce = (4500.0, 4500.0)
+        self.PositionX = positionX
+        self.PositionY = positionY
+        self.Angle = angle
+        self.Sprite.center_x = positionX
+        self.Sprite.center_y = positionY
+        self.physicEngine = physicsEngine
+
+        start_angle_radian = math.radians(self.Angle)
+        self.Sprite.change_x = math.cos(start_angle_radian) * self.BulletSpeed
+        self.Sprite.change_y = math.sin(start_angle_radian) * self.BulletSpeed
+
+#        self.Scene.add_sprite("Bullet", self.Sprite)
+
+        self.physicEngine.add_sprite(
+                self.Sprite,
+                friction=1.0,
+                moment=PymunkPhysicsEngine.MOMENT_INF,
+                damping=0.8,
+                collision_type="bullet",
+                max_velocity=400,
+            )
+
 
 class SpaceshipOne:
     def __init__(
@@ -76,7 +103,7 @@ class SpaceshipOne:
         self.MovementSpeed = 5
         self.MoveForce = 3000
         self.PlayerAngleStep = 5
-        self.BulletSpeed = 10
+
         self.Sprite = arcade.Sprite("sprites/spiked ship.png", 0.5)
         self.Sprite.center_x = 200
         self.Sprite.center_y = 200
@@ -90,6 +117,9 @@ class SpaceshipOne:
             collision_type="player",
             max_velocity=400,
         )
+        
+        self.BulletForce = (4500.0, 4500.0)
+
 
     def Update(self, delta_time_float):
         # Calculate speed based on the keys pressed
@@ -120,17 +150,8 @@ class SpaceshipOne:
 
         # Fire pressed
         if self.ControllerState.FirePressed:
-            bullet = arcade.Sprite("sprites/bullet.png", 1)
-            start_x = self.Sprite.center_x
-            start_y = self.Sprite.center_y
-            bullet.center_x = start_x
-            bullet.center_y = start_y
-            start_angle = self.Sprite.change_angle + 90
-
-            start_angle_radian = math.radians(start_angle)
-            bullet.change_x = math.cos(start_angle_radian) * self.BulletSpeed
-            bullet.change_y = math.sin(start_angle_radian) * self.BulletSpeed
-            self.Scene.add_sprite("Bullet", bullet)
+            bullet = Bullet(self.Sprite.center_x, self.Sprite.center_y, self.Sprite.change_angle + 90, self.PhysicsEngine)
+            self.Scene.add_sprite("Bullet", bullet.Sprite)
 
         # If the bullet flies off-screen, remove it.
         for bullet in self.Scene.get_sprite_list("Bullet"):
@@ -141,6 +162,8 @@ class SpaceshipOne:
                 or bullet.left > self.ScreenWidth
             ):
                 bullet.remove_from_sprite_lists()
+            else:
+                self.PhysicsEngine.apply_force(bullet, self.BulletForce)
 
 
 class gameWindow(arcade.Window):
@@ -180,6 +203,12 @@ class gameWindow(arcade.Window):
 
     def setup(self):
         self.scene = arcade.Scene()
+        self.scene.add_sprite_list
+
+        self.scene.add_sprite_list("Planet", use_spatial_hash=True)
+        self.scene.add_sprite_list("Player")
+        self.scene.add_sprite_list("Bullet", use_spatial_hash=False)
+
         self.player1Spaceship = SpaceshipOne(
             self.physics_engine,
             self.controller1State,
@@ -195,13 +224,8 @@ class gameWindow(arcade.Window):
             self.height,
         )
 
-        self.scene.add_sprite_list
 
-        self.scene.add_sprite_list("Planet", use_spatial_hash=True)
-        self.scene.add_sprite_list("Player")
-        self.scene.add_sprite_list("Bullet", use_spatial_hash=False)
-
-        self.scene.add_sprite("Player", self.player2Spaceship.Sprite)
+#        self.scene.add_sprite("Player", self.player2Spaceship.Sprite)
 
         planet = arcade.Sprite("sprites/planet.png", 1.0)
         planet.center_x = 100
