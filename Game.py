@@ -76,18 +76,14 @@ class Bullet(arcade.Sprite):
         physicsEngine: PymunkPhysicsEngine,
     ):
         super().__init__("sprites/bullet.png", 1)
-        self.BulletSpeed = 10
-        self.BulletForce = (4500.0, 4500.0)
-        self.Angle = angle
+        self.MoveForce = 1000
+        self.angle = angle
         self.ScreenWidth = screenWidth
         self.ScreenHeight = screenHeight
         self.center_x = positionX
         self.center_y = positionY
         self.physicEngine = physicsEngine
 
-        start_angle_radian = math.radians(self.Angle)
-        self.change_x = math.cos(start_angle_radian) * self.BulletSpeed
-        self.change_y = math.sin(start_angle_radian) * self.BulletSpeed
 
         self.physicEngine.add_sprite(
             self,
@@ -97,6 +93,9 @@ class Bullet(arcade.Sprite):
             collision_type="bullet",
             max_velocity=400,
         )
+
+        self.physicEngine.apply_impulse(self, (self.MoveForce, 0))
+
 
     def update(self):
 
@@ -110,8 +109,7 @@ class Bullet(arcade.Sprite):
         ):
             self.remove_from_sprite_lists()
             print("Remove Bullet")
-        else:
-            self.physicEngine.apply_force(self, self.BulletForce)
+
 
 
 class SpaceshipOne(arcade.Sprite):
@@ -182,12 +180,19 @@ class SpaceshipOne(arcade.Sprite):
         elif self.ControllerState.RightPressed and not self.ControllerState.LeftPressed:
             self.change_angle += -self.PlayerAngleStep
 
-        # Fire pressed
+        # Fire pressed            
         if self.ControllerState.FirePressed:
+            bullet_angle = self.angle+90
+            bullet_angle_radians = math.radians(bullet_angle)
+            offsetX = -12
+            offsetY = 35
+            centerX = self.center_x + math.sin(bullet_angle_radians)*offsetX + math.cos(bullet_angle_radians)*offsetY
+            centerY = self.center_y + math.sin(bullet_angle_radians)*offsetY + math.cos(bullet_angle_radians)*offsetX
+
             bullet = self.bulletFactory.CreateBullet(
-                self.center_x,
-                self.center_y,
-                self.change_angle + 90,
+                centerX,
+                centerY,
+                bullet_angle,
                 self.ScreenWidth,
                 self.screenHeight,
                 self.PhysicsEngine,
