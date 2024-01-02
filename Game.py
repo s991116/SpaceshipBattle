@@ -91,7 +91,7 @@ class Bullet(arcade.Sprite):
             moment=PymunkPhysicsEngine.MOMENT_INF,
             damping=0.8,
             collision_type="Bullet",
-            max_velocity=400,
+            max_velocity=1000,
             body_type=PymunkPhysicsEngine.DYNAMIC
         )
         self.physicEngine.apply_impulse(self, (self.MoveForce, 0))
@@ -150,6 +150,8 @@ class SpaceshipOne(arcade.Sprite):
             max_velocity=400,
         )
 
+        self.FirePressed = False
+
     def update(self):
 
         super().update()
@@ -180,7 +182,8 @@ class SpaceshipOne(arcade.Sprite):
             self.change_angle += -self.PlayerAngleStep
 
         # Fire pressed            
-        if self.ControllerState.FirePressed:
+        if self.ControllerState.FirePressed and not self.FirePressed:
+            self.FirePressed = True
             bullet_angle = self.angle+90
             bullet_angle_radians = math.radians(bullet_angle)
             offsetX = -12
@@ -198,6 +201,8 @@ class SpaceshipOne(arcade.Sprite):
             )
             self.Scene.add_sprite("Bullet", bullet)
 
+        if not self.ControllerState.FirePressed:
+            self.FirePressed = False
 
 class gameWindow(arcade.Window):
     def __init__(self):
@@ -268,7 +273,7 @@ class gameWindow(arcade.Window):
         self.player2Spaceship = SpaceshipOne(
             400,
             300,
-            90,
+            0,
             self.physics_engine,
             self.controller2State,
             self.scene,
@@ -285,11 +290,18 @@ class gameWindow(arcade.Window):
 
         def player_hit_handler(bullet_sprite, player_sprite, _arbiter, _space, _data):
             """ Called for bullet/wall collision """
-            print("Hit")
+            print("Bullet Hit Player")
             bullet_sprite.remove_from_sprite_lists()
             player_sprite.remove_from_sprite_lists()
 
+        def bullet_hit_handler(bullet1_sprite, bullet2_sprite, _arbiter, _space, _data):
+            """ Called for bullet/wall collision """
+            print("Bullet Hit Bullet")
+            bullet1_sprite.remove_from_sprite_lists()
+            bullet2_sprite.remove_from_sprite_lists()
+
         self.physics_engine.add_collision_handler("Bullet", "Player", post_handler=player_hit_handler)
+        self.physics_engine.add_collision_handler("Bullet", "Bullet", post_handler=bullet_hit_handler)
 
 
 
