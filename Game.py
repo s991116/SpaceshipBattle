@@ -76,7 +76,7 @@ class Bullet(arcade.Sprite):
         physicsEngine: PymunkPhysicsEngine,
     ):
         super().__init__("sprites/bullet.png", 1)
-        self.MoveForce = 1000
+        self.MoveForce = 2000
         self.angle = angle
         self.ScreenWidth = screenWidth
         self.ScreenHeight = screenHeight
@@ -90,10 +90,10 @@ class Bullet(arcade.Sprite):
             friction=1.0,
             moment=PymunkPhysicsEngine.MOMENT_INF,
             damping=0.8,
-            collision_type="bullet",
+            collision_type="Bullet",
             max_velocity=400,
+            body_type=PymunkPhysicsEngine.DYNAMIC
         )
-
         self.physicEngine.apply_impulse(self, (self.MoveForce, 0))
 
 
@@ -109,7 +109,6 @@ class Bullet(arcade.Sprite):
         ):
             self.remove_from_sprite_lists()
             print("Remove Bullet")
-
 
 
 class SpaceshipOne(arcade.Sprite):
@@ -147,7 +146,7 @@ class SpaceshipOne(arcade.Sprite):
             friction=1.0,
             moment=PymunkPhysicsEngine.MOMENT_INF,
             damping=0.8,
-            collision_type="player",
+            collision_type="Player",
             max_velocity=400,
         )
 
@@ -278,11 +277,21 @@ class gameWindow(arcade.Window):
             bulletFactory
         )
         self.scene.add_sprite("Player", self.player2Spaceship)
-
+d
         planet = arcade.Sprite("sprites/planet.png", 1.0)
         planet.center_x = 100
         planet.center_y = 50
         self.scene.add_sprite("Planet", planet)
+
+        def player_hit_handler(bullet_sprite, player_sprite, _arbiter, _space, _data):
+            """ Called for bullet/wall collision """
+            print("Hit")
+            bullet_sprite.remove_from_sprite_lists()
+            player_sprite.remove_from_sprite_lists()
+
+        self.physics_engine.add_collision_handler("Bullet", "Player", post_handler=player_hit_handler)
+
+
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
