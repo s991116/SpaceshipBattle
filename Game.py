@@ -277,7 +277,7 @@ class gameWindow(arcade.Window):
             bulletFactory
         )
         self.scene.add_sprite("Player", self.player2Spaceship)
-d
+
         planet = arcade.Sprite("sprites/planet.png", 1.0)
         planet.center_x = 100
         planet.center_y = 50
